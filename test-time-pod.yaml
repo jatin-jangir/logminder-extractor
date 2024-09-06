@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: time-printer
+  namespace: test-ns
+  labels:
+    app: time-printer
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: time-printer
+  template:
+    metadata:
+      labels:
+        app: time-printer
+    spec:
+      containers:
+      - name: time-printer
+        image: busybox
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do date; sleep 1; done"]
