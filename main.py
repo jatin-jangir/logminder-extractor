@@ -9,32 +9,6 @@ import time
 import yaml
 from kubernetes.client.exceptions import ApiException
 
-
-# Load Kubernetes configuration
-config.load_kube_config()
-
-# Create Kubernetes API client
-v1 = client.CoreV1Api()
-
-# Path to the YAML file
-yaml_file_path = "stored_times.yaml"
-# Environment variables
-pod_timeout_seconds = int(os.getenv("POD_TIMEOUT_SECONDS", 30))
-log_timeout_seconds = int(os.getenv("LOG_TIMEOUT_SECONDS", 60))
-minio_endpoint = os.getenv("MINIO_ENDPOINT")
-access_key = os.getenv("MINIO_ACCESS_KEY")
-secret_key = os.getenv("MINIO_SECRET_KEY")
-namespaces = os.getenv("NAMESPACES")
-namespace_list = [ns.strip() for ns in namespaces.split(",")] if namespaces else None
-bucket_name = os.getenv("BUCKET_NAME")
-
-# Initialize MinIO client
-minio_client = Minio(
-    minio_endpoint.replace("http://", "").replace("https://", ""),
-    access_key=access_key,
-    secret_key=secret_key,
-    secure=minio_endpoint.startswith("https")
-)
 # Load the YAML file
 def load_stored_times():
     if os.path.exists(yaml_file_path):
@@ -221,5 +195,50 @@ def process_pods(pods, processed_pods, namespace, bucket_name, minio_client, thr
             threads.append(thread)
             thread.start()
 
+
+try:
+    config.load_incluster_config()
+    print("Loaded in-cluster Kubernetes config")
+except config.ConfigException:
+    # Fallback to kubeconfig if running outside the cluster (optional for local testing)
+    config.load_kube_config()
+    print("Loaded local kubeconfig")
+
+# Create Kubernetes API client
+v1 = client.CoreV1Api()
+
+# Path to the YAML file
+yaml_file_path = os.getenv("STORED_TIME_FILE","/app/data/stored_times.yaml")
+
+# Environment variables
+pod_timeout_seconds = int(os.getenv("POD_TIMEOUT_SECONDS", 30))
+log_timeout_seconds = int(os.getenv("LOG_TIMEOUT_SECONDS", 60))
+minio_endpoint = os.getenv("MINIO_ENDPOINT")
+access_key = os.getenv("MINIO_ACCESS_KEY")
+secret_key = os.getenv("MINIO_SECRET_KEY")
+namespaces = os.getenv("NAMESPACES")
+namespace_list = [ns.strip() for ns in namespaces.split(",")] if namespaces else None
+bucket_name = os.getenv("BUCKET_NAME")
+configmap_namespace = os.getenv("CM_NAMESPACE", "default")  # Default to 'default' namespace if not provided
+configmap_name = os.getenv("CM_NAME", "logminder-extractor-config")  # Default ConfigMap name
+
+print("pod_timeout_seconds -- ",pod_timeout_seconds)
+print("log_timeout_seconds -- ",log_timeout_seconds)
+print("minio_endpoint -- ",minio_endpoint)
+print("access_key -- ",access_key)
+print("secret_key -- ",secret_key)
+print("namespaces -- ",namespaces)
+print("namespace_list -- ",namespace_list)
+print("bucket_name -- ",bucket_name)
+print("configmap_namespace -- ",configmap_namespace)
+print("configmap_name -- ",configmap_name)
+
+# Initialize MinIO client
+minio_client = Minio(
+    minio_endpoint.replace("http://", "").replace("https://", ""),
+    access_key=access_key,
+    secret_key=secret_key,
+    secure=minio_endpoint.startswith("https")
+)
 # Run the monitoring function
 monitor_pods_and_save_logs(bucket_name, minio_client)

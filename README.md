@@ -20,5 +20,7 @@ export NAMESPACES='test-ns'
 export BUCKET_NAME='local'
 export POD_TIMEOUT_SECONDS='30'                                                                 
 export LOG_TIMEOUT_SECONDS='60'
+export STORED_TIME_FILE='stored_time.yaml'
 export KUBECONFIG_FILE='/Users/jatinjangir/Documents/course/CS685/project/logminder/config'
+
 ```

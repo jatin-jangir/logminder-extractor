@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logminder-extractor-config
+  namespace: logminder
+  labels:
+    app: logminder-extractor
+data:
+  # The 'stored_times.yaml' file content (this can be dynamically updated as needed)
+  stored_times.yaml: |
+    namespace-1:
+      pod-1: 
+        my-container-1: "2024-09-28T14:15:22.123456+00:00"
+      pod-2: 
+        my-container-B: "2024-09-28T13:05:45.987654+00:00"
+        my-container-A: "2024-09-28T13:20:10.654321+00:00"
+    namespace-2:
+      pod-1: 
+        my-container-1: "2024-09-28T12:00:00.000000+00:00"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logminder-extractor
+  namespace: logminder
+  labels:
+    app: logminder-extractor
+spec:
+  replicas: 1  # Adjust the number of replicas based on your needs
+  selector:
+    matchLabels:
+      app: logminder-extractor
+  template:
+    metadata:
+      labels:
+        app: logminder-extractor
+    spec:
+      serviceAccountName: logminder-extractor-sa
+      containers:
+      - name: log-saver-container
+        imagePullPolicy: Always
+        image: "jangirjs/logminder-extractor:v0.0.4"  # Replace with your Docker Hub image
+        env:
+        - name: MINIO_ENDPOINT
+          value: "http://minio.minio:9000"  # Adjust as needed
+        - name: MINIO_ACCESS_KEY
+          value: IDkRUkP1W8Qfk66e9Xkm
+        - name: MINIO_SECRET_KEY
+          value: EFy662A4iCFN1JEhT6fFFLUcgMBS5NSpRpw49ciA
+        - name: BUCKET_NAME
+          value: "local"  # MinIO bucket name
+        - name: NAMESPACES
+          value: "test-ns"  # Comma-separated list of namespaces, or empty for all
+        - name: TIMEOUT_SECONDS
+          value: "30"  # Default timeout (in seconds)
+        volumeMounts:
+        - name: data-volume  # Mounting the persistent volume
+          mountPath: /app/data
+      volumes:
+      - name: data-volume  # Referencing the persistent volume claim
+        persistentVolumeClaim:
+          claimName: logminder-pvc
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: logminder-extractor-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "configmaps"]
+  verbs: ["get", "list", "watch", "update", "create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: logminder-extractor-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: logminder-extractor-role
+subjects:
+- kind: ServiceAccount
+  name: logminder-extractor-sa
+  namespace: logminder
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: logminder-extractor-sa
+  namespace: logminder 
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: logminder-pvc
+  namespace: logminder  # Ensure this matches your namespace
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 0.01Gi 

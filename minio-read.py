@@ -36,7 +36,7 @@ def get_file_content(bucket_name, object_name, minio_client):
         print(f"Error retrieving object '{object_name}' from bucket '{bucket_name}': {e}")
 
 # Specify the object (file) name
-object_name = "test-ns/time-printer-697bbd8549-7xvsw/time-printer/previous/06-09-2024/13-58-59.log"
+object_name = "test-ns/time-printer-fd965bb75-rs85j/time-printer/28-09-2024/10-15-50.log"
 
 # Fetch and print the content of the specified object
 get_file_content(bucket_name, object_name, minio_client)

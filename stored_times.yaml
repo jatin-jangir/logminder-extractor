@@ -1,0 +1,6 @@
+minio:
+  minio-6dd687bd55-zrbzw:
+    minio: '2024-09-23T10:09:07.573760+00:00'
+test-ns:
+  time-printer-697bbd8549-7xvsw:
+    time-printer: '2024-09-23T10:09:07.573620+00:00'

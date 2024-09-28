@@ -6,7 +6,7 @@ metadata:
   labels:
     app: time-printer
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app: time-printer
@@ -19,4 +19,4 @@ spec:
       - name: time-printer
         image: busybox
         command: ["/bin/sh"]
-        args: ["-c", "while true; do date; sleep 1; done"]
+        args: ["-c", "while true; do date; sleep 1; done; "]
